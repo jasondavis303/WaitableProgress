@@ -15,4 +15,8 @@
     <Description>Implementation of IProgress&lt;T&gt; that allows you to wait until all events have been processed</Description>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Include="..\.editorconfig" Link=".editorconfig" />
+  </ItemGroup>
+
 </Project>

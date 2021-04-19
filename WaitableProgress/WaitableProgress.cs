@@ -15,16 +15,15 @@
     };
 
     await SomeMethodAsync(prog);
-
     Console.WriteLine("SomeMethod Complete!");
 
     ---------------------------------------------------------------
 
     And about half the time, the last Console.WriteLine will run right before the final prog action - giving me screwy output.
     This fixes it - just call:
+        await SomeMethodAsync(prog);
         await prog.WaitUntilDoneAsync();
-
-    after calling SomeMethodAsync
+        Console.WriteLine("SomeMethod Complete!");
 */
 
 using System.Collections.Concurrent;
@@ -40,53 +39,57 @@ namespace System
         private readonly Action<T> m_handler;
         private readonly SendOrPostCallback m_invokeHandlers;
         private readonly ConcurrentQueue<T> m_queue;
-        private readonly System.Timers.Timer m_timer;
+        private readonly Timers.Timer m_timer;
 
-        public WaitableProgress()
+        public WaitableProgress(Action<T> handler, double interval = double.Epsilon)
         {
+            m_handler = handler ?? throw new ArgumentNullException(nameof(handler));
+
             m_synchronizationContext = ProgressStatics.DefaultContext;
 
             Contract.Assert(m_synchronizationContext != null);
             m_invokeHandlers = new SendOrPostCallback(InvokeHandlers);
 
             m_queue = new ConcurrentQueue<T>();
-            m_timer = new System.Timers.Timer(double.Epsilon) { AutoReset = false };
+            m_timer = new Timers.Timer(interval) { AutoReset = false };
             m_timer.Elapsed += m_timer_Elapsed;
             m_timer.Start();
         }
 
-        public WaitableProgress(Action<T> handler) : this()
-        {
-            m_handler = handler ?? throw new ArgumentNullException(nameof(handler));
-        }
-
         public event EventHandler<T> ProgressChanged;
 
-        protected virtual void OnReport(T value) => m_queue.Enqueue(value);
-
-        void IProgress<T>.Report(T value) { OnReport(value); }
+        public void Report(T value) => m_queue.Enqueue(value);
 
         private void InvokeHandlers(object state)
         {
-            T value = (T)state;
-
-            Action<T> handler = m_handler;
-            EventHandler<T> changedEvent = ProgressChanged;
-
-            handler?.Invoke(value);
-            changedEvent?.Invoke(this, value);
+            try
+            {
+                T value = (T)state;
+                m_handler?.Invoke(value);
+                ProgressChanged?.Invoke(this, value);
+            }
+            catch
+            {
+                //Swallow
+            }
         }
 
         private void m_timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            if (m_queue.TryDequeue(out T value))
+            //Because WaitUntilDone is checking if queue.Count == 0,
+            //Make sure it's not empty until after the handler is finished running
+
+            //Peek to get the value,
+            //Send to synchronously post the value,
+            //Dequeue to remove the value from the queue
+
+            if (m_queue.TryPeek(out T value))
             {
-                Action<T> handler = m_handler;
-                EventHandler<T> changedEvent = ProgressChanged;
-                if (handler != null || changedEvent != null)
-                    m_synchronizationContext.Post(m_invokeHandlers, value);
+                m_synchronizationContext.Send(m_invokeHandlers, value);
+                m_queue.TryDequeue(out _);
             }
 
+            //If disposed, just swallow - were done
             try { m_timer.Start(); }
             catch { }
         }
