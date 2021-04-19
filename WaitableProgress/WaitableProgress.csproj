@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>8</LangVersion>
+    <RootNamespace>System</RootNamespace>
+    <Version>1.0.0.1</Version>
+    <Authors>Jason Davis</Authors>
+    <Company>jasondavis303</Company>
+    <Copyright>jasondavis303</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/jasondavis303/WaitableProgress</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/jasondavis303/WaitableProgress.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <Description>Implementation of IProgress&lt;T&gt; that allows you to wait until all events have been processed</Description>
+  </PropertyGroup>
+
+</Project>
