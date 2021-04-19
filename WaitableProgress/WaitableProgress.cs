@@ -41,7 +41,7 @@ namespace System
         private readonly ConcurrentQueue<T> m_queue;
         private readonly Timers.Timer m_timer;
 
-        public WaitableProgress(Action<T> handler, double interval = double.Epsilon)
+        public WaitableProgress(double interval, Action<T> handler)
         {
             m_handler = handler ?? throw new ArgumentNullException(nameof(handler));
 
@@ -55,6 +55,8 @@ namespace System
             m_timer.Elapsed += m_timer_Elapsed;
             m_timer.Start();
         }
+
+        public WaitableProgress(Action<T> handler) : this(double.Epsilon, handler) { }
 
         public event EventHandler<T> ProgressChanged;
 
