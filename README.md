@@ -27,7 +27,7 @@ And about half the time, the last Console.WriteLine will run right before the fi
 This fixes it - just create WaitableProgress<T> and call:
 
 ```csharp
-    await SomeMethodAsync(prog);
-    await prog.WaitUntilDoneAsync();
-    Console.WriteLine("SomeMethod Complete!");
+await SomeMethodAsync(prog);
+await prog.WaitUntilDoneAsync();
+Console.WriteLine("SomeMethod Complete!");
 ```
