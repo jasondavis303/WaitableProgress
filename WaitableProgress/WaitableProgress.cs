@@ -27,7 +27,6 @@
 */
 
 using System.Collections.Concurrent;
-using System.Diagnostics.Contracts;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -39,24 +38,17 @@ namespace System
         private readonly Action<T> m_handler;
         private readonly SendOrPostCallback m_invokeHandlers;
         private readonly ConcurrentQueue<T> m_queue;
-        private readonly Timers.Timer m_timer;
+        private readonly Timer m_timer;
 
-        public WaitableProgress(double interval, Action<T> handler)
+        public WaitableProgress(Action<T> handler)
         {
             m_handler = handler ?? throw new ArgumentNullException(nameof(handler));
 
             m_synchronizationContext = ProgressStatics.DefaultContext;
-
-            Contract.Assert(m_synchronizationContext != null);
             m_invokeHandlers = new SendOrPostCallback(InvokeHandlers);
-
             m_queue = new ConcurrentQueue<T>();
-            m_timer = new Timers.Timer(interval) { AutoReset = false };
-            m_timer.Elapsed += m_timer_Elapsed;
-            m_timer.Start();
+            m_timer = new Timer(new TimerCallback(m_timer_Elapsed), null, 0, Timeout.Infinite);
         }
-
-        public WaitableProgress(Action<T> handler) : this(double.Epsilon, handler) { }
 
         public event EventHandler<T> ProgressChanged;
 
@@ -76,7 +68,7 @@ namespace System
             }
         }
 
-        private void m_timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        private void m_timer_Elapsed(object state)
         {
             //Because WaitUntilDone is checking if queue.Count == 0,
             //Make sure it's not empty until after the handler is finished running
@@ -92,7 +84,7 @@ namespace System
             }
 
             //If disposed, just swallow - were done
-            try { m_timer.Start(); }
+            try { m_timer.Change(0, Timeout.Infinite); }
             catch { }
         }
 
