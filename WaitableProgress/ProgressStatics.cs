@@ -2,7 +2,7 @@
 
 namespace System
 {
-    /// <summary>Holds static values for <see cref="Progress{T}"/>.</summary>
+    /// <summary>Holds static values for <see cref="WaitableProgress{T}"/>.</summary>
     /// <remarks>This avoids one static instance per type T.</remarks>
     static class ProgressStatics
     {

@@ -40,15 +40,18 @@ namespace System
         private readonly ConcurrentQueue<T> m_queue;
         private readonly Timer m_timer;
 
-        public WaitableProgress(Action<T> handler)
+        public WaitableProgress(Action<T> handler) : this(SynchronizationContext.Current ?? ProgressStatics.DefaultContext, handler) { }
+
+        public WaitableProgress(SynchronizationContext synchronizationContext, Action<T> handler)
         {
             m_handler = handler ?? throw new ArgumentNullException(nameof(handler));
 
-            m_synchronizationContext = ProgressStatics.DefaultContext;
+            m_synchronizationContext = synchronizationContext;
             m_invokeHandlers = new SendOrPostCallback(InvokeHandlers);
             m_queue = new ConcurrentQueue<T>();
             m_timer = new Timer(new TimerCallback(m_timer_Elapsed), null, 0, Timeout.Infinite);
         }
+
 
         public event EventHandler<T> ProgressChanged;
 
